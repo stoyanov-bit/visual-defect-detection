@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "visual-defect-detection"
+version = "0.1.0"
+
+description = "Visual anomaly detection using PyTorch"
+
+requires-python = ">=3.10"
+
+dependencies = [
+    "torch",
+    "torchvision",
+    "numpy",
+    "matplotlib",
+    "scikit-learn",
+    "pillow",
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "src"
+]
+
+testpaths = [
+    "tests"
+]

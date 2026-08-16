@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Test cache
+.pytest_cache/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Model files
+models/*.pt
+models/*.pth
+models/*.npy
+
+# Dataset
+data/raw/
+
+# OS
+.DS_Store
+Thumbs.db
