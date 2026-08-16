@@ -95,7 +95,7 @@ S_{\mathrm{global}}(x)
 \left(x_i-\hat{x}_i\right)^2
 ```
 
-where `x` is the original image and `x_hat` is its reconstruction.
+where $x$ is the original image and $\hat{x}$ is its reconstruction.
 
 Conceptually:
 
@@ -117,7 +117,7 @@ A limitation of this approach is that small localized defects contribute only a 
 
 To increase sensitivity to localized defects, a second anomaly score considers only the 1% of image pixels with the largest reconstruction errors.
 
-If `K` denotes the set of pixels with the largest reconstruction errors, the score is:
+If $K$ denotes the set of pixels with the largest reconstruction errors, the score is:
 
 ```math
 S_{\mathrm{top}}(x)
@@ -137,7 +137,7 @@ The approach improved performance compared with global reconstruction error, but
 
 The second approach uses transfer learning.
 
-A ResNet18 pretrained on ImageNet is used as a fixed feature extractor. The final classification layer is removed, producing a **512-dimensional feature vector** for each bottle image.
+A ResNet18 pretrained on ImageNet is used as a fixed feature extractor. The final classification layer is removed, producing a **512-dimensional feature vector** $f(x)$ for each bottle image.
 
 ```text
 Bottle Image
@@ -169,9 +169,9 @@ The normal feature center is calculated as:
 f(x_i)
 ```
 
-where `f(x_i)` represents the ResNet18 feature vector of a normal training image.
+where $f(x_i)$ represents the ResNet18 feature vector of a normal training image $x_i$.
 
-For a new image `x`, the anomaly score is its Euclidean distance from the normal feature center:
+For a new image $x$, the anomaly score is its Euclidean distance from the normal feature center:
 
 ```math
 d_{\mathrm{center}}(x)
@@ -181,7 +181,7 @@ f(x)-\mu_{\mathrm{normal}}
 \right\|_2
 ```
 
-A larger distance indicates that the image differs more strongly from the average normal bottle representation.
+A larger value of $d_{\mathrm{center}}(x)$ indicates that the image differs more strongly from the average normal bottle representation.
 
 ---
 
@@ -202,11 +202,13 @@ f(x)-f(x_i^{\mathrm{train}})
 \right\|_2
 ```
 
+Here, $f(x)$ represents the feature vector of the image being evaluated, while $f(x_i^{\mathrm{train}})$ represents the feature vector of the $i$-th normal training image.
+
 This allows the normal data to contain multiple valid visual appearances rather than forcing them into a single average representation.
 
 ### Anomaly Threshold
 
-The anomaly threshold is calculated from normal validation samples using the **95th percentile** of their nearest-neighbour distances:
+The anomaly threshold $T$ is calculated from normal validation samples using the **95th percentile** of their nearest-neighbour distances:
 
 ```math
 T
@@ -217,7 +219,7 @@ d_{\mathrm{NN}}(x_{\mathrm{val}})
 \right)
 ```
 
-A test image is classified as **defective** if:
+A test image $x$ is classified as **defective** if:
 
 ```math
 d_{\mathrm{NN}}(x) \geq T
@@ -303,7 +305,7 @@ The evaluation pipeline generates several visualizations.
 
 ### ROC Curve
 
-The ROC curve illustrates the ability of the continuous anomaly score to distinguish normal and defective samples.
+The ROC curve illustrates the ability of the continuous anomaly score $d_{\mathrm{NN}}(x)$ to distinguish normal and defective samples.
 
 ![ROC Curve](results/resnet/roc_curve.png)
 
@@ -459,7 +461,7 @@ Anomaly score : 12.8463
 Threshold     : 8.7214
 ```
 
-The anomaly score represents the feature-space distance between the input image and its nearest normal training sample.
+The anomaly score corresponds to the nearest-neighbour feature distance $d_{\mathrm{NN}}(x)$.
 
 ---
 
