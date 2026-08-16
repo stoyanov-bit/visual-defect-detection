@@ -87,15 +87,15 @@ Two scoring strategies were investigated.
 
 The first method calculates the mean squared reconstruction error over the complete image:
 
-$$
+```math
 S_{\mathrm{global}}(x)
 =
 \frac{1}{N}
 \sum_{i=1}^{N}
 \left(x_i-\hat{x}_i\right)^2
-$$
+```
 
-where \(x\) is the original image and \(\hat{x}\) is its reconstruction.
+where `x` is the original image and `x_hat` is its reconstruction.
 
 Conceptually:
 
@@ -117,15 +117,15 @@ A limitation of this approach is that small localized defects contribute only a 
 
 To increase sensitivity to localized defects, a second anomaly score considers only the 1% of image pixels with the largest reconstruction errors.
 
-If \(K\) denotes the set of pixels with the largest reconstruction errors, the score can be expressed as:
+If `K` denotes the set of pixels with the largest reconstruction errors, the score is:
 
-$$
+```math
 S_{\mathrm{top}}(x)
 =
 \frac{1}{|K|}
 \sum_{i \in K}
 \left(x_i-\hat{x}_i\right)^2
-$$
+```
 
 This places more emphasis on local regions that the autoencoder reconstructs poorly.
 
@@ -133,7 +133,7 @@ The approach improved performance compared with global reconstruction error, but
 
 ---
 
-## Pretrained ResNet18 Feature Extraction
+### 2. Pretrained ResNet18 Feature Extraction
 
 The second approach uses transfer learning.
 
@@ -155,37 +155,37 @@ Instead, the pretrained network provides a general visual representation that ca
 
 ---
 
-## Center-Distance Anomaly Detection
+### 3. Center-Distance Anomaly Detection
 
 The first feature-space approach represents normal bottle images by their mean feature vector.
 
 The normal feature center is calculated as:
 
-$$
+```math
 \mu_{\mathrm{normal}}
 =
 \frac{1}{N}
 \sum_{i=1}^{N}
 f(x_i)
-$$
+```
 
-where \(f(x_i)\) represents the ResNet18 feature vector of a normal training image.
+where `f(x_i)` represents the ResNet18 feature vector of a normal training image.
 
-For a new image \(x\), the anomaly score is its Euclidean distance from the normal feature center:
+For a new image `x`, the anomaly score is its Euclidean distance from the normal feature center:
 
-$$
+```math
 d_{\mathrm{center}}(x)
 =
 \left\|
 f(x)-\mu_{\mathrm{normal}}
 \right\|_2
-$$
+```
 
 A larger distance indicates that the image differs more strongly from the average normal bottle representation.
 
 ---
 
-## Nearest-Neighbour Anomaly Detection
+### 4. Nearest-Neighbour Anomaly Detection
 
 The final method avoids representing all normal samples using a single center.
 
@@ -193,43 +193,37 @@ Instead, each test image is compared with all normal training samples in feature
 
 The anomaly score is the Euclidean distance to the nearest normal training sample:
 
-$$
+```math
 d_{\mathrm{NN}}(x)
 =
 \min_i
 \left\|
-f(x)-f\left(x_i^{\mathrm{train}}\right)
+f(x)-f(x_i^{\mathrm{train}})
 \right\|_2
-$$
+```
 
 This allows the normal data to contain multiple valid visual appearances rather than forcing them into a single average representation.
 
-The anomaly threshold is calculated exclusively from normal validation samples using the **95th percentile** of their nearest-neighbour distances:
+### Anomaly Threshold
 
-$$
+The anomaly threshold is calculated from normal validation samples using the **95th percentile** of their nearest-neighbour distances:
+
+```math
 T
 =
 P_{95}
 \left(
 d_{\mathrm{NN}}(x_{\mathrm{val}})
 \right)
-$$
+```
 
-A test image is then classified according to:
+A test image is classified as **defective** if:
 
-$$
-\hat{y}
-=
-\begin{cases}
-1, & d_{\mathrm{NN}}(x) \geq T \\
-0, & d_{\mathrm{NN}}(x) < T
-\end{cases}
-$$
+```math
+d_{\mathrm{NN}}(x) \geq T
+```
 
-where:
-
-- \(0\) represents a normal bottle
-- \(1\) represents a detected anomaly
+Otherwise, it is classified as **good**.
 
 ---
 
