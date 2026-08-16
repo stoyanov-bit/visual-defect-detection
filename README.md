@@ -63,7 +63,7 @@ data/raw/bottle/
 
 The first anomaly detection approach uses a convolutional autoencoder trained exclusively on normal bottle images.
 
-The model learns the mapping
+The model learns the mapping:
 
 ```text
 Input Image
@@ -83,9 +83,21 @@ An anomaly score can therefore be calculated from the reconstruction error.
 
 Two scoring strategies were investigated.
 
-#### Global Reconstruction Error
+### Global Reconstruction Error
 
 The first method calculates the mean squared reconstruction error over the complete image:
+
+$$
+S_{\mathrm{global}}(x)
+=
+\frac{1}{N}
+\sum_{i=1}^{N}
+\left(x_i-\hat{x}_i\right)^2
+$$
+
+where \(x\) is the original image and \(\hat{x}\) is its reconstruction.
+
+Conceptually:
 
 ```text
 Original Image
@@ -101,15 +113,27 @@ Anomaly Score
 
 A limitation of this approach is that small localized defects contribute only a small fraction of the total image error.
 
-#### Top-1% Reconstruction Error
+### Top-1% Reconstruction Error
 
 To increase sensitivity to localized defects, a second anomaly score considers only the 1% of image pixels with the largest reconstruction errors.
 
-This improved the performance compared with global reconstruction error, but the autoencoder still failed to detect a substantial fraction of defective samples.
+If \(K\) denotes the set of pixels with the largest reconstruction errors, the score can be expressed as:
+
+$$
+S_{\mathrm{top}}(x)
+=
+\frac{1}{|K|}
+\sum_{i \in K}
+\left(x_i-\hat{x}_i\right)^2
+$$
+
+This places more emphasis on local regions that the autoencoder reconstructs poorly.
+
+The approach improved performance compared with global reconstruction error, but the autoencoder still failed to detect a substantial fraction of defective samples.
 
 ---
 
-### 2. Pretrained ResNet18 Feature Extraction
+## Pretrained ResNet18 Feature Extraction
 
 The second approach uses transfer learning.
 
@@ -131,48 +155,81 @@ Instead, the pretrained network provides a general visual representation that ca
 
 ---
 
-### 3. Center-Distance Anomaly Detection
+## Center-Distance Anomaly Detection
 
 The first feature-space approach represents normal bottle images by their mean feature vector.
 
-For a feature vector \(f(x)\), the anomaly score is its Euclidean distance from the normal feature center:
+The normal feature center is calculated as:
 
-\[
-d(x) = \|f(x) - \mu_{\text{normal}}\|_2
-\]
-
-where
-
-\[
-\mu_{\text{normal}}
+$$
+\mu_{\mathrm{normal}}
 =
 \frac{1}{N}
 \sum_{i=1}^{N}
 f(x_i)
-\]
+$$
+
+where \(f(x_i)\) represents the ResNet18 feature vector of a normal training image.
+
+For a new image \(x\), the anomaly score is its Euclidean distance from the normal feature center:
+
+$$
+d_{\mathrm{center}}(x)
+=
+\left\|
+f(x)-\mu_{\mathrm{normal}}
+\right\|_2
+$$
 
 A larger distance indicates that the image differs more strongly from the average normal bottle representation.
 
 ---
 
-### 4. Nearest-Neighbour Anomaly Detection
+## Nearest-Neighbour Anomaly Detection
 
 The final method avoids representing all normal samples using a single center.
 
 Instead, each test image is compared with all normal training samples in feature space.
 
-The anomaly score is the distance to the nearest normal training sample:
+The anomaly score is the Euclidean distance to the nearest normal training sample:
 
-\[
-d(x)
+$$
+d_{\mathrm{NN}}(x)
 =
 \min_i
-\|f(x)-f(x_i^{\text{train}})\|_2
-\]
+\left\|
+f(x)-f\left(x_i^{\mathrm{train}}\right)
+\right\|_2
+$$
 
 This allows the normal data to contain multiple valid visual appearances rather than forcing them into a single average representation.
 
-The anomaly threshold is calculated from the normal validation data using the **95th percentile** of the validation anomaly scores.
+The anomaly threshold is calculated exclusively from normal validation samples using the **95th percentile** of their nearest-neighbour distances:
+
+$$
+T
+=
+P_{95}
+\left(
+d_{\mathrm{NN}}(x_{\mathrm{val}})
+\right)
+$$
+
+A test image is then classified according to:
+
+$$
+\hat{y}
+=
+\begin{cases}
+1, & d_{\mathrm{NN}}(x) \geq T \\
+0, & d_{\mathrm{NN}}(x) < T
+\end{cases}
+$$
+
+where:
+
+- \(0\) represents a normal bottle
+- \(1\) represents a detected anomaly
 
 ---
 
@@ -254,27 +311,15 @@ The evaluation pipeline generates several visualizations.
 
 The ROC curve illustrates the ability of the continuous anomaly score to distinguish normal and defective samples.
 
-```text
-results/resnet/roc_curve.png
-```
-
 ![ROC Curve](results/resnet/roc_curve.png)
 
 ### Confusion Matrix
-
-```text
-results/resnet/confusion_matrix.png
-```
 
 ![Confusion Matrix](results/resnet/confusion_matrix.png)
 
 ### Feature-Distance Distribution
 
 The anomaly-score distributions show the separation between normal samples and the individual defect categories.
-
-```text
-results/resnet/feature_distance_distribution.png
-```
 
 ![Feature Distance Distribution](results/resnet/feature_distance_distribution.png)
 
@@ -338,7 +383,7 @@ For development and testing:
 python -m pip install -e ".[dev]"
 ```
 
-The main dependencies are:
+### Main Dependencies
 
 - PyTorch
 - TorchVision
@@ -352,21 +397,24 @@ The main dependencies are:
 
 ## Usage
 
-### Evaluate the Autoencoder
-
-Train the convolutional autoencoder:
+### Train the Autoencoder
 
 ```bash
 python train_autoencoder.py
 ```
 
-Evaluate the reconstruction-based anomaly detection methods:
+The autoencoder is trained exclusively on normal bottle images.
+
+### Evaluate the Autoencoder
 
 ```bash
 python evaluate_autoencoder.py
 ```
 
----
+This compares:
+
+- Global reconstruction MSE
+- Top-1% reconstruction error
 
 ### Evaluate ResNet18 Feature Detection
 
@@ -385,8 +433,6 @@ This compares:
 
 and generates the final evaluation plots.
 
----
-
 ### Prepare the Final Anomaly Detector
 
 Generate and store the normal training features and anomaly threshold:
@@ -396,8 +442,6 @@ python prepare_resnet_model.py
 ```
 
 This creates the reference data required for single-image inference.
-
----
 
 ### Predict a Single Image
 
